@@ -74,7 +74,8 @@ public class CompositeBuildServices implements PluginServiceRegistry {
         }
 
         public IncludedBuildExecuter createIncludedBuildExecuter(IncludedBuilds includedBuilds) {
-            return new DefaultIncludedBuildExecuter(includedBuilds);
+            IncludedBuildExecuter includedBuildExecuter = new DefaultIncludedBuildExecuter(includedBuilds);
+            return new ErrorHandlingIncludedBuildExecuter(includedBuildExecuter);
         }
 
         public IncludedBuildArtifactBuilder createIncludedBuildArtifactBuilder(IncludedBuildExecuter includedBuildExecuter) {

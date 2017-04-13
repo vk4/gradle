@@ -20,11 +20,11 @@ import com.google.common.collect.Sets;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.component.BuildIdentifier;
 import org.gradle.api.initialization.IncludedBuild;
+import org.gradle.api.internal.artifacts.component.DefaultBuildIdentifier;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.initialization.IncludedBuildExecuter;
 import org.gradle.initialization.IncludedBuilds;
-import org.gradle.api.internal.artifacts.component.DefaultBuildIdentifier;
 
 import java.util.Collection;
 import java.util.Set;

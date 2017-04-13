@@ -38,6 +38,7 @@ public class IncludedBuildTaskReferenceResolver implements TaskReferenceResolver
         Task task = tasks.findByName(delegateTaskName);
 
         if (task == null) {
+            System.out.println("CREATING: " + delegateTaskName);
             return tasks.create(delegateTaskName, CompositeBuildTaskDelegate.class, new Action<CompositeBuildTaskDelegate>() {
                 @Override
                 public void execute(CompositeBuildTaskDelegate compositeBuildTaskDelegate) {
@@ -48,6 +49,7 @@ public class IncludedBuildTaskReferenceResolver implements TaskReferenceResolver
         }
 
         if (task instanceof CompositeBuildTaskDelegate) {
+            System.out.printf("Adding to " + delegateTaskName);
             CompositeBuildTaskDelegate delegateTask = (CompositeBuildTaskDelegate) task;
             Preconditions.checkState(((CompositeBuildTaskDelegate) task).getBuild().equals(ref.getBuildName()));
             delegateTask.addTask(ref.getTaskPath());

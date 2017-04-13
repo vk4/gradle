@@ -102,7 +102,7 @@ public class ProjectDependencyResolver implements ComponentMetaDataResolver, Dep
             LocalComponentArtifactMetadata projectArtifact = (LocalComponentArtifactMetadata) artifact;
 
             // Run any registered actions to build this artifact
-            artifactBuilder.build(projectArtifact);
+//            artifactBuilder.build(projectArtifact);
 
             File localArtifactFile = projectArtifact.getFile();
             if (localArtifactFile != null) {

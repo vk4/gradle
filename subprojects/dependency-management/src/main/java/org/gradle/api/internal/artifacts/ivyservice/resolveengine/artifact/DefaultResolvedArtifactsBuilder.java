@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.gradle.api.artifacts.ResolutionStrategy;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.DependencyGraphEdge;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.DependencyGraphNode;
@@ -112,11 +113,12 @@ public class DefaultResolvedArtifactsBuilder implements DependencyArtifactsVisit
             return;
         }
 
-        if (from.getOwner().getComponentId() instanceof ProjectComponentIdentifier) {
+        ComponentIdentifier sourceComponent = from.getOwner().getComponentId();
+        if (sourceComponent instanceof ProjectComponentIdentifier) {
             // This is here to attempt to leave out build dependencies that would cause a cycle in the task graph for the current build, so that the cross-build cycle detection kicks in. It's not fully correct
-            ProjectComponentIdentifier incomingId = (ProjectComponentIdentifier) from.getOwner().getComponentId();
-            if (!incomingId.getBuild().isCurrentBuild()) {
-                return;
+            ProjectComponentIdentifier sourceProject = (ProjectComponentIdentifier) sourceComponent;
+            if (!sourceProject.getBuild().isCurrentBuild()) {
+                System.out.println("WOULD IGNORE: " + sourceProject + " > " + to.getOwner().getComponentId());
             }
         }
 
