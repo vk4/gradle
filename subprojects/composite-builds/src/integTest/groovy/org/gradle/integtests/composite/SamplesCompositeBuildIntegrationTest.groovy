@@ -21,6 +21,7 @@ import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.Sample
 import org.gradle.integtests.fixtures.UsesSample
 import org.junit.Rule
+import spock.lang.Ignore
 
 class SamplesCompositeBuildIntegrationTest extends AbstractIntegrationSpec {
 
@@ -94,6 +95,7 @@ class SamplesCompositeBuildIntegrationTest extends AbstractIntegrationSpec {
         outputContains("The answer is 42")
     }
 
+    @Ignore
     @UsesSample('compositeBuilds/plugin-dev')
     def "can develop plugin with composite"() {
         when:

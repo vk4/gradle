@@ -17,10 +17,12 @@
 package org.gradle.integtests.composite
 
 import org.gradle.integtests.fixtures.build.BuildTestFile
+import spock.lang.Ignore
 
 /**
  * Tests for plugin development scenarios within a composite build.
  */
+@Ignore
 class CompositeBuildPluginDevelopmentIntegrationTest extends AbstractCompositeBuildIntegrationTest {
     BuildTestFile buildB
     BuildTestFile pluginBuild
