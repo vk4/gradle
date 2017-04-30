@@ -44,12 +44,10 @@ import java.io.File;
 
 public class ProjectDependencyResolver implements ComponentMetaDataResolver, DependencyToComponentIdResolver, ArtifactResolver {
     private final LocalComponentRegistry localComponentRegistry;
-    private final ProjectArtifactBuilder artifactBuilder;
     private final ComponentIdentifierFactory componentIdentifierFactory;
 
-    public ProjectDependencyResolver(LocalComponentRegistry localComponentRegistry, ProjectArtifactBuilder artifactBuilder, ComponentIdentifierFactory componentIdentifierFactory) {
+    public ProjectDependencyResolver(LocalComponentRegistry localComponentRegistry, ComponentIdentifierFactory componentIdentifierFactory) {
         this.localComponentRegistry = localComponentRegistry;
-        this.artifactBuilder = artifactBuilder;
         this.componentIdentifierFactory = componentIdentifierFactory;
     }
 
@@ -91,7 +89,6 @@ public class ProjectDependencyResolver implements ComponentMetaDataResolver, Dep
     public void resolveArtifacts(ComponentResolveMetadata component, BuildableComponentArtifactsResolveResult result) {
         if (isProjectModule(component.getComponentId())) {
             ComponentArtifacts artifacts = new MetadataSourcedComponentArtifacts();
-            artifacts = new ProjectDependencyComponentArtifacts(artifactBuilder, artifacts);
             result.resolved(artifacts);
         }
     }
@@ -100,9 +97,6 @@ public class ProjectDependencyResolver implements ComponentMetaDataResolver, Dep
     public void resolveArtifact(ComponentArtifactMetadata artifact, ModuleSource moduleSource, BuildableArtifactResolveResult result) {
         if (isProjectModule(artifact.getComponentId())) {
             LocalComponentArtifactMetadata projectArtifact = (LocalComponentArtifactMetadata) artifact;
-
-            // Run any registered actions to build this artifact
-//            artifactBuilder.build(projectArtifact);
 
             File localArtifactFile = projectArtifact.getFile();
             if (localArtifactFile != null) {

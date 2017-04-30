@@ -36,14 +36,6 @@ class IncludedBuildArtifactBuilder {
         this.includedBuildExecuter = includedBuildExecuter;
     }
 
-    public void willBuild(ComponentArtifactMetadata artifact) {
-        if (artifact instanceof CompositeProjectComponentArtifactMetadata) {
-            CompositeProjectComponentArtifactMetadata compositeBuildArtifact = (CompositeProjectComponentArtifactMetadata) artifact;
-            BuildIdentifier buildId = getBuildIdentifier(compositeBuildArtifact);
-            addTasksForBuild(buildId, compositeBuildArtifact);
-        }
-    }
-
     public void build(BuildIdentifier requestingBuild, ComponentArtifactMetadata artifact) {
         if (artifact instanceof CompositeProjectComponentArtifactMetadata) {
             CompositeProjectComponentArtifactMetadata compositeBuildArtifact = (CompositeProjectComponentArtifactMetadata) artifact;

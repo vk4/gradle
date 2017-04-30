@@ -18,7 +18,6 @@ package org.gradle.composite.internal;
 
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.projectmodule.LocalComponentRegistry;
-import org.gradle.api.internal.artifacts.ivyservice.projectmodule.ProjectArtifactBuilder;
 import org.gradle.initialization.BuildIdentity;
 import org.gradle.initialization.IncludedBuildExecuter;
 import org.gradle.internal.component.local.model.LocalComponentArtifactMetadata;
@@ -35,7 +34,8 @@ import java.io.File;
  */
 public class CompositeBuildIdeProjectResolver {
     private final LocalComponentRegistry registry;
-    private final ProjectArtifactBuilder artifactBuilder;
+    private final IncludedBuildArtifactBuilder artifactBuilder;
+    private final BuildIdentity buildIdentity;
 
     public static CompositeBuildIdeProjectResolver from(ServiceRegistry services) {
         return new CompositeBuildIdeProjectResolver(services.get(LocalComponentRegistry.class), services.get(IncludedBuildExecuter.class), services.get(BuildIdentity.class));
@@ -44,7 +44,8 @@ public class CompositeBuildIdeProjectResolver {
     public CompositeBuildIdeProjectResolver(LocalComponentRegistry registry, IncludedBuildExecuter executer, BuildIdentity buildIdentity) {
         this.registry = registry;
         // Can't use the session-scope `IncludedBuildArtifactBuilder`, because we don't want to be execute jar tasks (which are pre-registered)
-        artifactBuilder = new CompositeProjectArtifactBuilder(new IncludedBuildArtifactBuilder(executer), buildIdentity);
+        this.buildIdentity = buildIdentity;
+        this.artifactBuilder = new IncludedBuildArtifactBuilder(executer);
     }
 
     /**
@@ -69,7 +70,7 @@ public class CompositeBuildIdeProjectResolver {
         if (artifactMetaData == null) {
             return null;
         }
-        artifactBuilder.build(artifactMetaData);
+        artifactBuilder.build(buildIdentity.getCurrentBuild(), artifactMetaData);
         return artifactMetaData.getFile();
     }
 }
