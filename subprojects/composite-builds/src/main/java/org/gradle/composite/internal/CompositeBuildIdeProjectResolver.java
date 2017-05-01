@@ -20,6 +20,7 @@ import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.projectmodule.LocalComponentRegistry;
 import org.gradle.initialization.BuildIdentity;
 import org.gradle.initialization.IncludedBuildExecuter;
+import org.gradle.initialization.IncludedBuilds;
 import org.gradle.internal.component.local.model.LocalComponentArtifactMetadata;
 import org.gradle.internal.service.ServiceRegistry;
 
@@ -38,14 +39,19 @@ public class CompositeBuildIdeProjectResolver {
     private final BuildIdentity buildIdentity;
 
     public static CompositeBuildIdeProjectResolver from(ServiceRegistry services) {
-        return new CompositeBuildIdeProjectResolver(services.get(LocalComponentRegistry.class), services.get(IncludedBuildExecuter.class), services.get(BuildIdentity.class));
+        return new CompositeBuildIdeProjectResolver(services.get(LocalComponentRegistry.class), services.get(IncludedBuilds.class), services.get(BuildIdentity.class));
     }
 
-    public CompositeBuildIdeProjectResolver(LocalComponentRegistry registry, IncludedBuildExecuter executer, BuildIdentity buildIdentity) {
+    public CompositeBuildIdeProjectResolver(LocalComponentRegistry registry, IncludedBuilds includedBuilds, BuildIdentity buildIdentity) {
         this.registry = registry;
         // Can't use the session-scope `IncludedBuildArtifactBuilder`, because we don't want to be execute jar tasks (which are pre-registered)
         this.buildIdentity = buildIdentity;
-        this.artifactBuilder = new IncludedBuildArtifactBuilder(executer);
+        this.artifactBuilder = new IncludedBuildArtifactBuilder(createIncludedBuildExecuter(includedBuilds));
+    }
+
+    private IncludedBuildExecuter createIncludedBuildExecuter(IncludedBuilds includedBuilds) {
+        IncludedBuildExecuter includedBuildExecuter = new DefaultIncludedBuildExecuter(includedBuilds);
+        return new ErrorHandlingIncludedBuildExecuter(includedBuildExecuter);
     }
 
     /**

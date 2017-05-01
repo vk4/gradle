@@ -20,7 +20,6 @@ import org.gradle.StartParameter;
 import org.gradle.api.internal.artifacts.ImmutableModuleIdentifierFactory;
 import org.gradle.api.internal.composite.CompositeBuildContext;
 import org.gradle.api.internal.tasks.TaskReferenceResolver;
-import org.gradle.initialization.IncludedBuildExecuter;
 import org.gradle.initialization.IncludedBuildFactory;
 import org.gradle.initialization.IncludedBuilds;
 import org.gradle.initialization.NestedBuildFactory;
@@ -71,14 +70,6 @@ public class CompositeBuildServices implements PluginServiceRegistry {
             return new DefaultCompositeContextBuilder(includedBuilds, projectRegistry, context);
         }
 
-        public IncludedBuildExecuter createIncludedBuildExecuter(IncludedBuilds includedBuilds) {
-            IncludedBuildExecuter includedBuildExecuter = new DefaultIncludedBuildExecuter(includedBuilds);
-            return new ErrorHandlingIncludedBuildExecuter(includedBuildExecuter);
-        }
-
-        public IncludedBuildArtifactBuilder createIncludedBuildArtifactBuilder(IncludedBuildExecuter includedBuildExecuter) {
-            return new IncludedBuildArtifactBuilder(includedBuildExecuter);
-        }
     }
 
     private static class CompositeBuildBuildScopeServices {
