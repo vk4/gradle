@@ -22,9 +22,19 @@ import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.SettingsInternal;
 import org.gradle.api.internal.artifacts.ivyservice.dependencysubstitution.DependencySubstitutionsInternal;
 
+import java.util.Collection;
+
 public interface IncludedBuildInternal extends ConfigurableIncludedBuild {
     DependencySubstitutionsInternal resolveDependencySubstitutions();
     SettingsInternal getLoadedSettings();
     GradleInternal getConfiguredBuild();
     BuildResult execute(Iterable<String> tasks);
+
+
+    // When we discover a dependency that requires a task to be executed, add it here and keep the reference.
+    void addTasksToExecute(Collection<String> task);
+
+    // Kick off the build: we'll need to do this for all included builds that have tasks to execute,
+    // and do it in parallel for them all...
+    void awaitCompletion();
 }

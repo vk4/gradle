@@ -18,6 +18,7 @@ package org.gradle.composite.internal;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.gradle.BuildResult;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.DependencySubstitutions;
@@ -28,16 +29,49 @@ import org.gradle.api.internal.artifacts.ivyservice.dependencysubstitution.Defau
 import org.gradle.api.internal.artifacts.ivyservice.dependencysubstitution.DependencySubstitutionsInternal;
 import org.gradle.api.tasks.TaskReference;
 import org.gradle.initialization.GradleLauncher;
+import org.gradle.initialization.ReportedException;
 import org.gradle.internal.Factory;
+import org.gradle.internal.UncheckedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * 1. Add Task Reference to graph (already done)
+ * 2. When resolving task reference
+ *      - Register 'addTasksToExecute' for included build (do this directly on the build?)
+ *      - Create a delegating task that will call 'waitForCompletion' on included build
+ * 3. When delegating task calls 'waitForCompletion' it will trigger build, returning when complete
+ *      - 'addTasksToExecute' for an executing build is OK. Will require a second build execution
+ * 4. Later, we'll kick off the build sooner, once all of the 'addTasksToExecute' have been called
+ *      - Then, 'waitForCompletion' will do exactly that. Might wait for complete build, not just task requested.
+ * 5. Improvements
+ *      - Only wait for a particular task to be complete, not the entire build
+ *      - Allow more tasks to be added to the graph of an executing build?
+ *      - Detect cycles
+ */
 public class DefaultIncludedBuild implements IncludedBuildInternal {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultIncludedBuild.class);
+
     private final File projectDir;
     private final Factory<GradleLauncher> gradleLauncherFactory;
     private final ImmutableModuleIdentifierFactory moduleIdentifierFactory;
     private final List<Action<? super DependencySubstitutions>> dependencySubstitutionActions = Lists.newArrayList();
+
+    // Fields guarded by lock
+    private final Lock lock = new ReentrantLock();
+    private final Condition buildCompleted = lock.newCondition();
+    private boolean currentlyExecuting;
+
+    private final List<String> tasksToExecute = Lists.newArrayList();
+    private final Set<String> executedTasks = Sets.newLinkedHashSet();
     private DefaultDependencySubstitutions dependencySubstitutions;
 
     private GradleLauncher gradleLauncher;
@@ -119,6 +153,64 @@ public class DefaultIncludedBuild implements IncludedBuildInternal {
     }
 
     @Override
+    public void addTasksToExecute(Collection<String> tasks) {
+        lock.lock();
+        try {
+            tasksToExecute.addAll(tasks);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void awaitCompletion() {
+        List<String> taskNames = buildStarted();
+        try {
+            doBuild(taskNames);
+        } finally {
+            buildCompleted();
+        }
+    }
+
+    private List<String> buildStarted() {
+        lock.lock();
+        try {
+            waitForExistingBuildToComplete();
+            List<String> tasksForBuild = Lists.newArrayList(tasksToExecute);
+            tasksToExecute.clear();
+            currentlyExecuting = true;
+            return tasksForBuild;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
+    private void waitForExistingBuildToComplete() {
+        try {
+            while (currentlyExecuting) {
+                buildCompleted.await();
+            }
+        } catch (InterruptedException e) {
+            throw UncheckedException.throwAsUncheckedException(e);
+        }
+    }
+
+    private BuildResult doBuild(Iterable<String> taskPaths)  throws ReportedException {
+        List<String> tasksToExecute = Lists.newArrayList();
+        for (String taskPath : taskPaths) {
+            if (executedTasks.add(taskPath)) {
+                tasksToExecute.add(taskPath);
+            }
+        }
+        if (tasksToExecute.isEmpty()) {
+            return null;
+        }
+        LOGGER.info("Executing " + getName() + " tasks " + taskPaths);
+        return execute(tasksToExecute);
+    }
+
+
     public BuildResult execute(Iterable<String> tasks) {
         GradleLauncher launcher = getGradleLauncher();
         launcher.getGradle().getStartParameter().setTaskNames(tasks);
@@ -126,6 +218,16 @@ public class DefaultIncludedBuild implements IncludedBuildInternal {
             return launcher.run();
         } finally {
             markAsNotReusable();
+        }
+    }
+
+    private void buildCompleted() {
+        lock.lock();
+        try {
+            currentlyExecuting = false;
+            buildCompleted.signalAll();
+        } finally {
+            lock.unlock();
         }
     }
 

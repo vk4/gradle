@@ -18,13 +18,15 @@ package org.gradle.composite.internal;
 
 import com.google.common.collect.Sets;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.artifacts.component.BuildIdentifier;
-import org.gradle.api.initialization.IncludedBuild;
 import org.gradle.api.internal.artifacts.component.DefaultBuildIdentifier;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.initialization.IncludedBuildExecuter;
 import org.gradle.initialization.IncludedBuilds;
+import org.gradle.initialization.ReportedException;
+import org.gradle.internal.exceptions.Contextual;
+import org.gradle.internal.exceptions.LocationAwareException;
 
 import java.util.Collection;
 import java.util.Set;
@@ -54,10 +56,32 @@ public class CompositeBuildTaskDelegate extends DefaultTask {
     @TaskAction
     public void executeTasksInOtherBuild() {
         IncludedBuilds includedBuilds = getServices().get(IncludedBuilds.class);
-        IncludedBuildExecuter builder = getServices().get(IncludedBuildExecuter.class);
-        IncludedBuild includedBuild = includedBuilds.getBuild(build);
+        IncludedBuildInternal includedBuild = (IncludedBuildInternal) includedBuilds.getBuild(build);
         BuildIdentifier buildId = new DefaultBuildIdentifier(includedBuild.getName());
         // sourceBuild is currently always root build in a composite
-        builder.execute(new DefaultBuildIdentifier(":", true), buildId, tasks);
+        includedBuild.addTasksToExecute(tasks);
+        try {
+            includedBuild.awaitCompletion();
+        } catch (ReportedException e) {
+            throw contextualizeFailure(buildId, e);
+        }
     }
+
+    private RuntimeException contextualizeFailure(BuildIdentifier buildId, ReportedException e) {
+        if (e.getCause() instanceof LocationAwareException) {
+            LocationAwareException lae = (LocationAwareException) e.getCause();
+            IncludedBuildArtifactException wrappedCause = new IncludedBuildArtifactException("Failed to build artifacts for " + buildId, lae.getCause());
+            LocationAwareException newLae = new LocationAwareException(wrappedCause, lae.getSourceDisplayName(), lae.getLineNumber());
+            return new ReportedException(newLae);
+        }
+        return e;
+    }
+
+    @Contextual
+    private static class IncludedBuildArtifactException extends GradleException {
+        public IncludedBuildArtifactException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 }
