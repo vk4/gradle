@@ -30,7 +30,6 @@ import org.gradle.internal.service.scopes.PluginServiceRegistry;
 
 public class CompositeBuildServices implements PluginServiceRegistry {
     public void registerGlobalServices(ServiceRegistration registration) {
-        registration.addProvider(new CompositeBuildGlobalScopeServices());
     }
 
     public void registerBuildSessionServices(ServiceRegistration registration) {
@@ -48,14 +47,15 @@ public class CompositeBuildServices implements PluginServiceRegistry {
     }
 
     private static class CompositeBuildGlobalScopeServices {
-        public TaskReferenceResolver createResolver() {
-            return new IncludedBuildTaskReferenceResolver();
-        }
     }
 
     private static class CompositeBuildSessionScopeServices {
         public DefaultIncludedBuilds createIncludedBuilds() {
             return new DefaultIncludedBuilds();
+        }
+
+        public TaskReferenceResolver createResolver(IncludedBuilds includedBuilds) {
+            return new IncludedBuildTaskReferenceResolver(includedBuilds);
         }
 
         public CompositeBuildContext createCompositeBuildContext(IncludedBuilds includedBuilds, ImmutableModuleIdentifierFactory moduleIdentifierFactory) {

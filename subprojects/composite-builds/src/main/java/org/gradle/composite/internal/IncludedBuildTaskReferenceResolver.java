@@ -16,15 +16,24 @@
 
 package org.gradle.composite.internal;
 
-import com.google.common.base.Preconditions;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.TaskReferenceResolver;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskInstantiationException;
 import org.gradle.api.tasks.TaskReference;
+import org.gradle.initialization.IncludedBuilds;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class IncludedBuildTaskReferenceResolver implements TaskReferenceResolver {
+
+    private final IncludedBuilds includedBuilds;
+
+    public IncludedBuildTaskReferenceResolver(IncludedBuilds includedBuilds) {
+        this.includedBuilds = includedBuilds;
+    }
 
     @Override
     public Task constructTask(final TaskReference reference, TaskContainer tasks) {
@@ -33,26 +42,24 @@ public class IncludedBuildTaskReferenceResolver implements TaskReferenceResolver
         }
 
         final IncludedBuildTaskReference ref = (IncludedBuildTaskReference) reference;
+        IncludedBuildInternal build = (IncludedBuildInternal) includedBuilds.getBuild(ref.getBuildName());
+        Collection<String> singleTask = Collections.singleton(ref.getTaskPath());
+        build.addTasksToExecute(singleTask);
+
         String delegateTaskName = ref.getBuildName();
 
         Task task = tasks.findByName(delegateTaskName);
 
         if (task == null) {
-            System.out.println("CREATING: " + delegateTaskName);
             return tasks.create(delegateTaskName, CompositeBuildTaskDelegate.class, new Action<CompositeBuildTaskDelegate>() {
                 @Override
                 public void execute(CompositeBuildTaskDelegate compositeBuildTaskDelegate) {
                     compositeBuildTaskDelegate.setBuild(ref.getBuildName());
-                    compositeBuildTaskDelegate.addTask(ref.getTaskPath());
                 }
             });
         }
 
         if (task instanceof CompositeBuildTaskDelegate) {
-            System.out.printf("Adding to " + delegateTaskName);
-            CompositeBuildTaskDelegate delegateTask = (CompositeBuildTaskDelegate) task;
-            Preconditions.checkState(((CompositeBuildTaskDelegate) task).getBuild().equals(ref.getBuildName()));
-            delegateTask.addTask(ref.getTaskPath());
             return task;
         }
 

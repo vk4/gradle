@@ -16,7 +16,6 @@
 
 package org.gradle.composite.internal;
 
-import com.google.common.collect.Sets;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.artifacts.component.BuildIdentifier;
@@ -28,12 +27,11 @@ import org.gradle.initialization.ReportedException;
 import org.gradle.internal.exceptions.Contextual;
 import org.gradle.internal.exceptions.LocationAwareException;
 
-import java.util.Collection;
-import java.util.Set;
-
+// TODO:DAZ Make a separate delegating task per target task in the included build
+// so that we can wait for the specific task required.
+// Or get rid of the delegating task altogether
 public class CompositeBuildTaskDelegate extends DefaultTask {
     private String build;
-    private Set<String> tasks = Sets.newLinkedHashSet();
 
     @Input
     public String getBuild() {
@@ -44,22 +42,11 @@ public class CompositeBuildTaskDelegate extends DefaultTask {
         this.build = build;
     }
 
-    @Input
-    public Collection<String> getTasks() {
-        return tasks;
-    }
-
-    public void addTask(String task) {
-        this.tasks.add(task);
-    }
-
     @TaskAction
     public void executeTasksInOtherBuild() {
         IncludedBuilds includedBuilds = getServices().get(IncludedBuilds.class);
         IncludedBuildInternal includedBuild = (IncludedBuildInternal) includedBuilds.getBuild(build);
         BuildIdentifier buildId = new DefaultBuildIdentifier(includedBuild.getName());
-        // sourceBuild is currently always root build in a composite
-        includedBuild.addTasksToExecute(tasks);
         try {
             includedBuild.awaitCompletion();
         } catch (ReportedException e) {

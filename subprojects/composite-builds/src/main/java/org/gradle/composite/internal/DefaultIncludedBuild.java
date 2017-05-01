@@ -154,6 +154,7 @@ public class DefaultIncludedBuild implements IncludedBuildInternal {
 
     @Override
     public void addTasksToExecute(Collection<String> tasks) {
+        System.out.println("Adding task " + tasks + " to build " + getName());
         lock.lock();
         try {
             tasksToExecute.addAll(tasks);
