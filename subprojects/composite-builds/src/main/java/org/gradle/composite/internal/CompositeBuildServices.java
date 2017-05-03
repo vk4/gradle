@@ -20,6 +20,7 @@ import org.gradle.StartParameter;
 import org.gradle.api.internal.artifacts.ImmutableModuleIdentifierFactory;
 import org.gradle.api.internal.composite.CompositeBuildContext;
 import org.gradle.api.internal.tasks.TaskReferenceResolver;
+import org.gradle.initialization.BuildIdentity;
 import org.gradle.initialization.IncludedBuildFactory;
 import org.gradle.initialization.IncludedBuilds;
 import org.gradle.initialization.NestedBuildFactory;
@@ -54,10 +55,6 @@ public class CompositeBuildServices implements PluginServiceRegistry {
             return new DefaultIncludedBuilds();
         }
 
-        public TaskReferenceResolver createResolver(IncludedBuilds includedBuilds) {
-            return new IncludedBuildTaskReferenceResolver(includedBuilds);
-        }
-
         public CompositeBuildContext createCompositeBuildContext(IncludedBuilds includedBuilds, ImmutableModuleIdentifierFactory moduleIdentifierFactory) {
             return new DefaultBuildableCompositeBuildContext(includedBuilds, moduleIdentifierFactory);
         }
@@ -73,6 +70,10 @@ public class CompositeBuildServices implements PluginServiceRegistry {
     }
 
     private static class CompositeBuildBuildScopeServices {
+        public TaskReferenceResolver createResolver(IncludedBuilds includedBuilds, BuildIdentity buildIdentity) {
+            return new IncludedBuildTaskReferenceResolver(includedBuilds, buildIdentity);
+        }
+
         public IncludedBuildFactory createIncludedBuildFactory(Instantiator instantiator, StartParameter startParameter, NestedBuildFactory nestedBuildFactory, ImmutableModuleIdentifierFactory moduleIdentifierFactory) {
             return new DefaultIncludedBuildFactory(instantiator, startParameter, nestedBuildFactory, moduleIdentifierFactory);
         }

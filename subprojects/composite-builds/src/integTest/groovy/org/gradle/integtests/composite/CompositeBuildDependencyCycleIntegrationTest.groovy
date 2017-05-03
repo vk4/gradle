@@ -19,12 +19,9 @@ package org.gradle.integtests.composite
 import org.gradle.integtests.fixtures.build.BuildTestFile
 import org.gradle.integtests.fixtures.resolve.ResolveTestFixture
 import org.gradle.test.fixtures.maven.MavenModule
-import spock.lang.Ignore
-
 /**
  * Tests for resolving dependency cycles in a composite build.
  */
-@Ignore
 class CompositeBuildDependencyCycleIntegrationTest extends AbstractCompositeBuildIntegrationTest {
     BuildTestFile buildB
     BuildTestFile buildC
@@ -90,7 +87,7 @@ class CompositeBuildDependencyCycleIntegrationTest extends AbstractCompositeBuil
         failure
             .assertHasDescription("Failed to build artifacts for build 'buildB'")
             .assertHasCause("Failed to build artifacts for build 'buildC'")
-            .assertHasCause("Could not download buildB.jar (project :buildB:)")
+            .assertHasCause("Could not determine the dependencies of task ':buildC:compileJava'.")
             .assertHasCause("Included build dependency cycle: build 'buildB' -> build 'buildC' -> build 'buildB'")
     }
 
@@ -138,7 +135,7 @@ class CompositeBuildDependencyCycleIntegrationTest extends AbstractCompositeBuil
             .assertHasDescription("Failed to build artifacts for build 'buildB'")
             .assertHasCause("Failed to build artifacts for build 'buildC'")
             .assertHasCause("Failed to build artifacts for build 'buildD'")
-            .assertHasCause("Could not download buildB.jar (project :buildB:)")
+            .assertHasCause("Could not determine the dependencies of task ':buildD:compileJava'.")
             .assertHasCause("Included build dependency cycle: build 'buildB' -> build 'buildC' -> build 'buildD' -> build 'buildB'")
     }
 
@@ -179,7 +176,7 @@ project(':b1') {
         failure
             .assertHasDescription("Failed to build artifacts for build 'buildB'")
             .assertHasCause("Failed to build artifacts for build 'buildC'")
-            .assertHasCause("Could not download b2.jar (project :buildB:b2)")
+            .assertHasCause("Could not determine the dependencies of task ':buildC:compileJava'.")
             .assertHasCause("Included build dependency cycle: build 'buildB' -> build 'buildC' -> build 'buildB'")
     }
 
@@ -215,7 +212,7 @@ project(':b1') {
         failure
             .assertHasDescription("Failed to build artifacts for build 'buildB'")
             .assertHasCause("Failed to build artifacts for build 'buildC'")
-            .assertHasCause("Could not download buildB.jar (project :buildB:)")
+            .assertHasCause("Could not determine the dependencies of task ':buildC:compileJava'.")
             .assertHasCause("Included build dependency cycle: build 'buildB' -> build 'buildC' -> build 'buildB'")
     }
 

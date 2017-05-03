@@ -21,4 +21,6 @@ import org.gradle.api.initialization.IncludedBuild;
 public interface IncludedBuilds {
     Iterable<IncludedBuild> getBuilds();
     IncludedBuild getBuild(String name);
+
+    void addTask(String sourceBuild, String targetBuild, String taskPath);
 }

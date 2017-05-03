@@ -118,7 +118,8 @@ public class DefaultResolvedArtifactsBuilder implements DependencyArtifactsVisit
             // This is here to attempt to leave out build dependencies that would cause a cycle in the task graph for the current build, so that the cross-build cycle detection kicks in. It's not fully correct
             ProjectComponentIdentifier sourceProject = (ProjectComponentIdentifier) sourceComponent;
             if (!sourceProject.getBuild().isCurrentBuild()) {
-                System.out.println("WOULD IGNORE: " + sourceProject + " > " + to.getOwner().getComponentId());
+                System.out.println("IGNORING: " + sourceProject + " > " + to.getOwner().getComponentId());
+                return;
             }
         }
 
