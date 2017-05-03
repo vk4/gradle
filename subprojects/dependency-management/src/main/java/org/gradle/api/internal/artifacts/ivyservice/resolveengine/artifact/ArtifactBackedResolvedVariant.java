@@ -18,8 +18,6 @@ package org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact;
 
 import org.gradle.api.Buildable;
 import org.gradle.api.artifacts.ResolvedArtifact;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.ResolvedArtifactSet.AsyncArtifactListener;
 import org.gradle.api.internal.attributes.AttributeContainerInternal;
@@ -75,12 +73,6 @@ class ArtifactBackedResolvedVariant implements ResolvedVariant {
         return attributes;
     }
 
-    private static boolean isFromIncludedBuild(ResolvedArtifact artifact) {
-        ComponentIdentifier id = artifact.getId().getComponentIdentifier();
-        return id instanceof ProjectComponentIdentifier
-            && !((ProjectComponentIdentifier) id).getBuild().isCurrentBuild();
-    }
-
     private static class SingleArtifactSet implements ResolvedArtifactSet, ResolvedArtifactSet.Completion {
         private final AttributeContainer variantAttributes;
         private final ResolvedArtifact artifact;
@@ -93,7 +85,7 @@ class ArtifactBackedResolvedVariant implements ResolvedVariant {
 
         @Override
         public Completion startVisit(BuildOperationQueue<RunnableBuildOperation> actions, AsyncArtifactListener listener) {
-            if (listener.requireArtifactFiles() && !isFromIncludedBuild(artifact))  {
+            if (listener.requireArtifactFiles())  {
                 actions.add(new DownloadArtifactFile(artifact, this, listener));
             }
             return this;
