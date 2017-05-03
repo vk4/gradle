@@ -43,8 +43,7 @@ public class IncludedBuildTaskReferenceResolver implements TaskReferenceResolver
 
         final IncludedBuildTaskReference ref = (IncludedBuildTaskReference) reference;
         IncludedBuildInternal build = (IncludedBuildInternal) includedBuilds.getBuild(ref.getBuildName());
-        Collection<String> singleTask = Collections.singleton(ref.getTaskPath());
-        build.addTasksToExecute(singleTask);
+        build.addTaskToExecute(ref.getTaskPath());
 
         String delegateTaskName = ref.getBuildName();
 

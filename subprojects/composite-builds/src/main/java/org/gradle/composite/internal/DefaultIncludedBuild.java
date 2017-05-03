@@ -36,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Condition;
@@ -153,11 +152,11 @@ public class DefaultIncludedBuild implements IncludedBuildInternal {
     }
 
     @Override
-    public void addTasksToExecute(Collection<String> tasks) {
-        System.out.println("Adding task " + tasks + " to build " + getName());
+    public void addTaskToExecute(String task) {
+        System.out.println("Adding task " + task + " to build " + getName());
         lock.lock();
         try {
-            tasksToExecute.addAll(tasks);
+            tasksToExecute.add(task);
         } finally {
             lock.unlock();
         }
