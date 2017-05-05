@@ -85,8 +85,7 @@ class CompositeBuildDependencyCycleIntegrationTest extends AbstractCompositeBuil
 
         then:
         failure
-            .assertHasDescription("Failed to build artifacts for build 'buildB'")
-            .assertHasCause("Failed to build artifacts for build 'buildC'")
+            .assertHasDescription("Failed to build artifacts for build 'buildC'")
             .assertHasCause("Could not determine the dependencies of task ':buildC:compileJava'.")
             .assertHasCause("Included build dependency cycle: build 'buildB' -> build 'buildC' -> build 'buildB'")
     }
@@ -132,8 +131,7 @@ class CompositeBuildDependencyCycleIntegrationTest extends AbstractCompositeBuil
 
         then:
         failure
-            .assertHasDescription("Failed to build artifacts for build 'buildB'")
-            .assertHasCause("Failed to build artifacts for build 'buildC'")
+            .assertHasDescription("Failed to build artifacts for build 'buildC'")
             .assertHasCause("Failed to build artifacts for build 'buildD'")
             .assertHasCause("Could not determine the dependencies of task ':buildD:compileJava'.")
             .assertHasCause("Included build dependency cycle: build 'buildB' -> build 'buildC' -> build 'buildD' -> build 'buildB'")
@@ -174,8 +172,7 @@ project(':b1') {
 
         then:
         failure
-            .assertHasDescription("Failed to build artifacts for build 'buildB'")
-            .assertHasCause("Failed to build artifacts for build 'buildC'")
+            .assertHasDescription("Failed to build artifacts for build 'buildC'")
             .assertHasCause("Could not determine the dependencies of task ':buildC:compileJava'.")
             .assertHasCause("Included build dependency cycle: build 'buildB' -> build 'buildC' -> build 'buildB'")
     }
@@ -210,8 +207,7 @@ project(':b1') {
 
         then:
         failure
-            .assertHasDescription("Failed to build artifacts for build 'buildB'")
-            .assertHasCause("Failed to build artifacts for build 'buildC'")
+            .assertHasDescription("Failed to build artifacts for build 'buildC'")
             .assertHasCause("Could not determine the dependencies of task ':buildC:compileJava'.")
             .assertHasCause("Included build dependency cycle: build 'buildB' -> build 'buildC' -> build 'buildB'")
     }
@@ -259,8 +255,7 @@ project(':b1') {
 
         then:
         failure
-            .assertHasDescription("Failed to build artifacts for build 'buildB'")
-            .assertHasCause("Circular dependency between the following tasks:")
+            .assertHasDescription("Circular dependency between the following tasks:")
     }
 
     protected void resolveSucceeds(String task) {

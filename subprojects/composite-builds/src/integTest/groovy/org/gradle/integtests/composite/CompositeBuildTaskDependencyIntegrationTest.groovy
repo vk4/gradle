@@ -224,9 +224,7 @@ class CompositeBuildTaskDependencyIntegrationTest extends AbstractCompositeBuild
         fails(buildA, ":delegate")
 
         then:
-        // TODO:DAZ Investigate why this is reporting as "Failed to build artifacts"
-        failure.assertHasDescription("Failed to build artifacts for build 'buildB'")
-        failure.assertHasCause("Task 'does-not-exist' not found in project ':buildB'.")
+        failure.assertHasDescription("Task 'does-not-exist' not found in project ':buildB'.")
     }
 
     def "reports failure when task path is not qualified for included build"() {
