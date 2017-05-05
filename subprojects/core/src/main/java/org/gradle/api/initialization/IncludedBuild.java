@@ -42,4 +42,6 @@ public interface IncludedBuild {
      * Produces a reference to a task in the included build.
      */
     TaskReference task(String path);
+
+    void runBuild();
 }

@@ -163,12 +163,27 @@ public class DefaultIncludedBuild implements IncludedBuildInternal {
     }
 
     @Override
-    public void awaitCompletion() {
+    public void runBuild() {
+        // TODO:DAZ Need to capture failures and throw them on `awaitCompletion`
         List<String> taskNames = buildStarted();
         try {
             doBuild(taskNames);
         } finally {
             buildCompleted();
+        }
+    }
+
+    // TODO:DAZ Needs to only await a particular task
+    @Override
+    public void awaitCompletion() {
+        runBuild();
+
+        // TODO:DAZ Needs to re-run build if not running and tasks are present (tasks were added subsequently)
+        lock.lock();
+        try {
+            waitForExistingBuildToComplete();
+        } finally {
+            lock.unlock();
         }
     }
 
