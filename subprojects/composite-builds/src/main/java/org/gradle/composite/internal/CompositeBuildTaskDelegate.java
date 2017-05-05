@@ -27,6 +27,11 @@ import org.gradle.initialization.ReportedException;
 import org.gradle.internal.exceptions.Contextual;
 import org.gradle.internal.exceptions.LocationAwareException;
 
+// TODO:DAZ Any other task should be able to run at the same time as these, even tasks that are _not_ parallel safe
+// Not having a 'task' is probably the right solution to this.
+
+// These 'tasks' should also not consume a worker thread resource: currently can easily hang due to thread-starvation
+
 // TODO:DAZ Make a separate delegating task per target task in the included build
 // so that we can wait for the specific task required.
 // Or get rid of the delegating task altogether
