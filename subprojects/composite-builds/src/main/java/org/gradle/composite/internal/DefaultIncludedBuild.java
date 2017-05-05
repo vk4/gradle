@@ -219,9 +219,10 @@ public class DefaultIncludedBuild implements IncludedBuildInternal {
             }
         }
         if (tasksToExecute.isEmpty()) {
+            LOGGER.warn("Not executing " + getName() + ": no tasks to run");
             return null;
         }
-        LOGGER.info("Executing " + getName() + " tasks " + taskPaths);
+        LOGGER.warn("Executing " + getName() + " tasks " + taskPaths);
         return execute(tasksToExecute);
     }
 

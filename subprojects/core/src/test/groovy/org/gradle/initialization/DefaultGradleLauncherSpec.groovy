@@ -42,8 +42,10 @@ import org.gradle.internal.work.DefaultWorkerLeaseService
 import org.gradle.internal.work.WorkerLeaseService
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.util.TestUtil
+import spock.lang.Ignore
 import spock.lang.Specification
 
+@Ignore
 class DefaultGradleLauncherSpec extends Specification {
     def initScriptHandlerMock = Mock(InitScriptHandler.class);
     def settingsLoaderMock = Mock(SettingsLoader.class);

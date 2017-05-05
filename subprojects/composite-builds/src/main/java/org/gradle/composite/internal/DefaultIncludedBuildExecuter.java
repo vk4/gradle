@@ -34,6 +34,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+// TODO:DAZ Cycle detection no longer works correctly, since builds are not executed in determined order
 class DefaultIncludedBuildExecuter implements IncludedBuildExecuter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultIncludedBuildExecuter.class);
     private final IncludedBuilds includedBuilds;
