@@ -62,7 +62,7 @@ public class DefaultBuildOperationExecutor implements BuildOperationExecutor, St
         this.timeProvider = timeProvider;
         this.progressLoggerFactory = progressLoggerFactory;
         this.buildOperationQueueFactory = buildOperationQueueFactory;
-        this.fixedSizePool = executorFactory.create("build operations", maxWorkerCount);
+        this.fixedSizePool = executorFactory.create("build operations");
     }
 
     @Override
