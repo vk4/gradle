@@ -196,7 +196,7 @@ public class WorkInProgressRenderer extends BatchOutputEventListener {
                 public void remove(OperationIdentifier childId) {
                     Set<OperationIdentifier> children = parentIdToChildrenIds.get(parentId);
                     if (children == null) {
-                        throw new IllegalStateException("");
+                        return;
                     }
                     children.remove(childId);
                     if (children.isEmpty()) {

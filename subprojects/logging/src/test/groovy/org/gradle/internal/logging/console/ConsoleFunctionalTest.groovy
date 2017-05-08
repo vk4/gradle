@@ -205,6 +205,7 @@ class ConsoleFunctionalTest extends Specification {
         renderer.onOutput(startEvent(6, ':nope'))
 
         then:
+        progressArea.buildProgressLabelCount == metaData.rows / 2
         ConcurrentTestUtil.poll(1) {
             assert progressArea.display == ['> :wat', '> :foo', '> :bar', '> :baz', '> :foz']
         }
@@ -213,6 +214,7 @@ class ConsoleFunctionalTest extends Specification {
         renderer.onOutput(completeEvent(1, ':wat'))
 
         then:
+        progressArea.buildProgressLabelCount == metaData.rows / 2
         ConcurrentTestUtil.poll(1) {
             assert progressArea.display == ['> :nope', '> :foo', '> :bar', '> :baz', '> :foz']
         }
@@ -243,6 +245,26 @@ class ConsoleFunctionalTest extends Specification {
         then:
         ConcurrentTestUtil.poll(1) {
             assert progressArea.display == [IDLE, '> :foo', '> :bar', '> :baz']
+        }
+    }
+
+    def "progress display height doesn't scale back down when complete events are received"() {
+        when:
+        renderer.onOutput(startEvent(1, ':wat'))
+        renderer.onOutput(startEvent(2, ':foo'))
+
+        then:
+        ConcurrentTestUtil.poll(1) {
+            assert progressArea.display == ['> :wat', '> :foo']
+        }
+
+        and:
+        renderer.onOutput(completeEvent(2, ':foo'))
+        renderer.onOutput(completeEvent(1, ':wat'))
+
+        then:
+        ConcurrentTestUtil.poll(1) {
+            assert progressArea.display == [IDLE, IDLE]
         }
     }
 
