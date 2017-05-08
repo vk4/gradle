@@ -81,11 +81,7 @@ public class ConsoleStub implements Console {
             this.buildProgressLabels = new ArrayList<StyledLabel>(numLabels);
             this.testableLabels = new ArrayList<TestableRedrawableLabel>(numLabels);
 
-            for (int i = 0; i < numLabels; i++) {
-                final TestableRedrawableLabel label = new TestableRedrawableLabel(String.valueOf(i + 1));
-                buildProgressLabels.add(label);
-                testableLabels.add(label);
-            }
+            resizeBuildProgressTo(numLabels);
         }
 
         @Override
@@ -109,6 +105,11 @@ public class ConsoleStub implements Console {
 
         @Override
         public void resizeBuildProgressTo(int buildProgressLabelCount) {
+            for (int i = buildProgressLabelCount - this.buildProgressLabelCount; i > 0; --i) {
+                final TestableRedrawableLabel label = new TestableRedrawableLabel(String.valueOf((buildProgressLabelCount - i) + 1));
+                buildProgressLabels.add(label);
+                testableLabels.add(label);
+            }
             this.buildProgressLabelCount = buildProgressLabelCount;
         }
 

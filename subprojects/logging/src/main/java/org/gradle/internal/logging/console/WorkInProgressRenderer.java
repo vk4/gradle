@@ -18,7 +18,6 @@ package org.gradle.internal.logging.console;
 
 import org.gradle.internal.logging.events.BatchOutputEventListener;
 import org.gradle.internal.logging.events.EndOutputEvent;
-import org.gradle.internal.logging.events.MaxWorkerCountChangeEvent;
 import org.gradle.internal.logging.events.OperationIdentifier;
 import org.gradle.internal.logging.events.OutputEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
@@ -50,7 +49,7 @@ public class WorkInProgressRenderer extends BatchOutputEventListener {
     private final Deque<ProgressOperation> unassignedProgressOperations = new ArrayDeque<ProgressOperation>();
 
     // Track the parent-children relation between progress operation to avoid displaying a parent when children are been displayed
-    private final Map<OperationIdentifier, Set<OperationIdentifier>> parentIdToChildrenIds = new HashMap<OperationIdentifier, Set<OperationIdentifier>>();
+    private final ParentRegistry registry = new ParentRegistry();
 
     public WorkInProgressRenderer(OutputEventListener listener, BuildProgressArea progressArea, DefaultWorkInProgressFormatter labelFormatter, ConsoleLayoutCalculator consoleLayoutCalculator) {
         this.listener = listener;
@@ -75,10 +74,6 @@ public class WorkInProgressRenderer extends BatchOutputEventListener {
             operations.progress(progressEvent.getStatus(), progressEvent.getProgressOperationId());
         } else if (event instanceof EndOutputEvent) {
             progressArea.setVisible(false);
-        } else if (event instanceof MaxWorkerCountChangeEvent) {
-            int newCount = consoleLayoutCalculator.calculateNumWorkersForConsoleDisplay(
-                ((MaxWorkerCountChangeEvent) event).getNewMaxWorkerCount());
-            resizeTo(newCount);
         }
 
         listener.onOutput(event);
@@ -92,6 +87,7 @@ public class WorkInProgressRenderer extends BatchOutputEventListener {
 
     private void resizeTo(int newBuildProgressLabelCount) {
         int previousBuildProgressLabelCount = progressArea.getBuildProgressLabels().size();
+        newBuildProgressLabelCount = consoleLayoutCalculator.calculateNumWorkersForConsoleDisplay(newBuildProgressLabelCount);
         if (previousBuildProgressLabelCount >= newBuildProgressLabelCount) {
             // We don't support shrinking at the moment
             return;
@@ -103,87 +99,59 @@ public class WorkInProgressRenderer extends BatchOutputEventListener {
         for (int i = newBuildProgressLabelCount - 1; i >= previousBuildProgressLabelCount; --i) {
             unusedProgressLabels.push(progressArea.getBuildProgressLabels().get(i));
         }
-
-        // Try to empty the unassigned progress operations
-        while (!unusedProgressLabels.isEmpty() && !unassignedProgressOperations.isEmpty()) {
-            attach(unassignedProgressOperations.pop());
-        }
     }
 
     private void attach(ProgressOperation operation) {
-        // Skip attach if a child is already present or no progress message to display
-        if (isChildAssociationAlreadyExists(operation.getOperationId())) {
+        // Skip attach if a children is already present
+        if (registry.find(operation.getOperationId()).hasChildren()) {
             return;
         }
 
-        AssociationLabel association = null;
-
         // Reuse parent label if possible
         if (operation.getParent() != null) {
-            addDirectChildOperationId(operation.getParent().getOperationId(), operation.getOperationId());
-            association = operationIdToAssignedLabels.remove(operation.getParent().getOperationId());
-            if (association != null) {
-                unusedProgressLabels.push(association.label);
-                association = null;
-            }
+            registry.find(operation.getParent().getOperationId()).add(operation.getOperationId());
+            detach(operation.getParent().getOperationId());
         }
 
-        // No parent? Try to use a new label
-        if (!unusedProgressLabels.isEmpty()) {
-            association = new AssociationLabel(operation, unusedProgressLabels.pop());
+        // No more unused label? Try to resize.
+        if (unusedProgressLabels.isEmpty()) {
+            int newValue = operationIdToAssignedLabels.size() + 1;
+            resizeTo(newValue);
         }
 
-        if (association == null) {
-            unassignedProgressOperations.addLast(operation);
+        // Try to use a new label
+        if (unusedProgressLabels.isEmpty()) {
+            unassignedProgressOperations.add(operation);
         } else {
-            operationIdToAssignedLabels.put(operation.getOperationId(), association);
+            attach(operation, unusedProgressLabels.pop());
         }
+    }
+
+    private void attach(ProgressOperation operation, StyledLabel label) {
+        AssociationLabel association = new AssociationLabel(operation, label);
+        operationIdToAssignedLabels.put(operation.getOperationId(), association);
     }
 
     private void detach(ProgressOperation operation) {
         if (operation.getParent() != null) {
-            removeDirectChildOperationId(operation.getParent().getOperationId(), operation.getOperationId());
+            registry.find(operation.getParent().getOperationId()).remove(operation.getOperationId());
         }
 
-        AssociationLabel association = operationIdToAssignedLabels.remove(operation.getOperationId());
+        detach(operation.getOperationId());
+        unassignedProgressOperations.remove(operation);
+
+        if (operation.getParent() != null) {
+            attach(operation.getParent());
+        } else if (!unassignedProgressOperations.isEmpty()) {
+            attach(unassignedProgressOperations.pop());
+        }
+    }
+
+    private void detach(OperationIdentifier operationId) {
+        AssociationLabel association = operationIdToAssignedLabels.remove(operationId);
         if (association != null) {
             unusedProgressLabels.push(association.label);
-            if (operation.getParent() != null) {
-                attach(operation.getParent());
-            } else if (!unassignedProgressOperations.isEmpty()){
-                attach(unassignedProgressOperations.pop());
-            }
-        } else {
-            unassignedProgressOperations.remove(operation);
         }
-    }
-
-    private void addDirectChildOperationId(OperationIdentifier parentId, OperationIdentifier childId) {
-        Set<OperationIdentifier> children = parentIdToChildrenIds.get(parentId);
-        if (children == null) {
-            children = new HashSet<OperationIdentifier>();
-            parentIdToChildrenIds.put(parentId, children);
-        }
-        children.add(childId);
-    }
-
-    private void removeDirectChildOperationId(OperationIdentifier parentId, OperationIdentifier childId) {
-        Set<OperationIdentifier> children = parentIdToChildrenIds.get(parentId);
-        if (children == null) {
-            return;
-        }
-        children.remove(childId);
-        if (children.isEmpty()) {
-            parentIdToChildrenIds.remove(parentId);
-        }
-    }
-
-    private boolean isChildAssociationAlreadyExists(OperationIdentifier parentId) {
-        Set<OperationIdentifier> children = parentIdToChildrenIds.get(parentId);
-        if (children != null && !children.isEmpty()) {
-            return true;
-        }
-        return false;
     }
 
     private void renderNow() {
@@ -206,6 +174,50 @@ public class WorkInProgressRenderer extends BatchOutputEventListener {
 
         void renderNow() {
             label.setText(labelFormatter.format(operation));
+        }
+    }
+
+    private static class ParentRegistry {
+        private final Map<OperationIdentifier, Set<OperationIdentifier>> parentIdToChildrenIds = new HashMap<OperationIdentifier, Set<OperationIdentifier>>();
+
+        public ChildrenRegistry find(final OperationIdentifier parentId) {
+            return new ChildrenRegistry() {
+                @Override
+                public void add(OperationIdentifier childId) {
+                    Set<OperationIdentifier> children = parentIdToChildrenIds.get(parentId);
+                    if (children == null) {
+                        children = new HashSet<OperationIdentifier>();
+                        parentIdToChildrenIds.put(parentId, children);
+                    }
+                    children.add(childId);
+                }
+
+                @Override
+                public void remove(OperationIdentifier childId) {
+                    Set<OperationIdentifier> children = parentIdToChildrenIds.get(parentId);
+                    if (children == null) {
+                        throw new IllegalStateException("");
+                    }
+                    children.remove(childId);
+                    if (children.isEmpty()) {
+                        parentIdToChildrenIds.remove(parentId);
+                    }
+                }
+
+                @Override
+                public boolean hasChildren() {
+                    Set<OperationIdentifier> children = parentIdToChildrenIds.get(parentId);
+                    return children != null && !children.isEmpty();
+                }
+            };
+        }
+
+        public interface ChildrenRegistry {
+            void add(OperationIdentifier childId);
+
+            void remove(OperationIdentifier childId);
+
+            boolean hasChildren();
         }
     }
 }

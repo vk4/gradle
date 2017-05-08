@@ -201,11 +201,12 @@ class ConsoleFunctionalTest extends Specification {
         renderer.onOutput(startEvent(2, ':foo'))
         renderer.onOutput(startEvent(3, ':bar'))
         renderer.onOutput(startEvent(4, ':baz'))
-        renderer.onOutput(startEvent(5, ':nope'))
+        renderer.onOutput(startEvent(5, ':foz'))
+        renderer.onOutput(startEvent(6, ':nope'))
 
         then:
         ConcurrentTestUtil.poll(1) {
-            assert progressArea.display == ['> :wat', '> :foo', '> :bar', '> :baz']
+            assert progressArea.display == ['> :wat', '> :foo', '> :bar', '> :baz', '> :foz']
         }
 
         when:
@@ -213,7 +214,7 @@ class ConsoleFunctionalTest extends Specification {
 
         then:
         ConcurrentTestUtil.poll(1) {
-            assert progressArea.display == ['> :nope', '> :foo', '> :bar', '> :baz']
+            assert progressArea.display == ['> :nope', '> :foo', '> :bar', '> :baz', '> :foz']
         }
     }
 
